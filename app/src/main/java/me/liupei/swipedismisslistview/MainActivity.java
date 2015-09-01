@@ -1,8 +1,10 @@
 package me.liupei.swipedismisslistview;
 
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,7 +19,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private SwipeDismissListView listView;
-    private List<Integer> data = new ArrayList<>();
+    private List<Integer> data = new ArrayList<Integer>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +29,41 @@ public class MainActivity extends AppCompatActivity {
         setContentView(listView = new SwipeDismissListView(this));
         listView.setBackgroundColor(Color.BLACK);
         final MyAdapter adapter = new MyAdapter(data);
+
+        TextView header0 = new TextView(this);
+        header0.setText("Header0");
+        header0.setBackgroundColor(Color.GREEN);
+        header0.setTextSize(50);
+        listView.addHeaderView(header0);
+
+        TextView header1 = new TextView(this);
+        header1.setText("Header1");
+        header1.setBackgroundColor(Color.GREEN);
+        header1.setTextSize(50);
+        listView.addHeaderView(header1);
+
+        TextView header2 = new TextView(this);
+        header2.setText("Header2");
+        header2.setBackgroundColor(Color.GREEN);
+        header2.setTextSize(50);
+        listView.addHeaderView(header2);
+
+        TextView footer0 = new TextView(this);
+        footer0.setText("Footer0");
+        footer0.setBackgroundColor(Color.RED);
+        footer0.setTextSize(50);
+        listView.addFooterView(footer0);
+
+        TextView footer1 = new TextView(this);
+        footer1.setText("Footer1");
+        footer1.setBackgroundColor(Color.RED);
+        footer1.setTextSize(50);
+        listView.addFooterView(footer1);
+
+
         listView.setAdapter(adapter);
+        listView.setDivider(new ColorDrawable(Color.BLUE));
+        listView.setDividerHeight(2);
         listView.setOnDismissListener(new SwipeDismissListView.OnDismissListener() {
             @Override
             public void onDismiss(int position) {
@@ -69,6 +105,16 @@ public class MainActivity extends AppCompatActivity {
             this.data = data;
         }
 
+        private static class ViewHolder{
+
+            final TextView tv;
+
+            public ViewHolder(View convertView){
+                tv = (TextView) convertView.findViewById(R.id.tv);
+            }
+
+        }
+
         @Override
         public int getCount() {
             return data.size();
@@ -86,22 +132,34 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
-            TextView tv = new TextView(parent.getContext());
-            tv.setText(getItem(position) + "");
-            tv.setTextSize(50);
-            tv.setBackgroundColor(Color.WHITE);
-            tv.setOnClickListener(new View.OnClickListener() {
+
+            ViewHolder viewHolder = null;
+
+            if(convertView == null) {
+
+                convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_type_b, parent, false);
+                viewHolder = new ViewHolder(convertView);
+                convertView.setTag(viewHolder);
+
+            } else {
+                viewHolder = (ViewHolder) convertView.getTag();
+            }
+
+            viewHolder.tv.setText(getItem(position) + "");
+            viewHolder.tv.setTextSize(50);
+            viewHolder.tv.setBackgroundColor(Color.WHITE);
+            viewHolder.tv.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Toast.makeText(v.getContext(), "onClick:" + getItem(position), Toast.LENGTH_SHORT).show();
                 }
             });
-            return tv;
+            return convertView;
         }
     }
 
     private void fillData() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 15; i++) {
             data.add(i);
         }
     }
