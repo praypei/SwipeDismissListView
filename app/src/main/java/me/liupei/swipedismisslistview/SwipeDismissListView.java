@@ -1,8 +1,8 @@
 package me.liupei.swipedismisslistview;
 
-import android.animation.Animator;
-import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.support.v4.view.ViewCompat;
+import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -49,10 +49,7 @@ public class SwipeDismissListView extends ListView {
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
 
-        float x = ev.getX();
-        float y = ev.getY();
-
-        System.out.println("onTouchEvent:" + ev);
+        float dX = ev.getX() - downX;
 
         if (isHorizontalScroll) {
 
@@ -60,60 +57,50 @@ public class SwipeDismissListView extends ListView {
 
             if (currentView != null) {
 
-                currentView.setTranslationX(x - downX);
+                ViewCompat.setTranslationX(currentView, dX);
 
             }
 
             if (ev.getAction() == MotionEvent.ACTION_UP || ev.getAction() == MotionEvent.ACTION_CANCEL) {
 
-                if (Math.abs(x - downX) < getWidth() * DISMISS_FACTOR) {
+                if (Math.abs(dX) < getWidth() * DISMISS_FACTOR) {
                     //还原
                     xTranslationAnim(currentView, 0, null);
                 } else {
                     //dismiss
-                    if (x - downX >= 0) {
+                    if (dX >= 0) {
                         //向右
-                        xTranslationAnim(currentView, getWidth(), new Animator.AnimatorListener() {
+                        xTranslationAnim(currentView, getWidth(), new ViewPropertyAnimatorListener() {
                             @Override
-                            public void onAnimationStart(Animator animation) {
+                            public void onAnimationStart(View view) {
 
                             }
 
                             @Override
-                            public void onAnimationEnd(Animator animation) {
+                            public void onAnimationEnd(View view) {
                                 shorten(currentView, currentIndex + getFirstVisiblePosition() - getHeaderViewsCount());
                             }
 
                             @Override
-                            public void onAnimationCancel(Animator animation) {
-
-                            }
-
-                            @Override
-                            public void onAnimationRepeat(Animator animation) {
+                            public void onAnimationCancel(View view) {
 
                             }
                         });
                     } else {
                         //向左
-                        xTranslationAnim(currentView, -getWidth(), new Animator.AnimatorListener() {
+                        xTranslationAnim(currentView, -getWidth(), new ViewPropertyAnimatorListener() {
                             @Override
-                            public void onAnimationStart(Animator animation) {
+                            public void onAnimationStart(View view) {
 
                             }
 
                             @Override
-                            public void onAnimationEnd(Animator animation) {
+                            public void onAnimationEnd(View view) {
                                 shorten(currentView, currentIndex + getFirstVisiblePosition() - getHeaderViewsCount());
                             }
 
                             @Override
-                            public void onAnimationCancel(Animator animation) {
-
-                            }
-
-                            @Override
-                            public void onAnimationRepeat(Animator animation) {
+                            public void onAnimationCancel(View view) {
 
                             }
                         });
@@ -133,16 +120,14 @@ public class SwipeDismissListView extends ListView {
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         final int actionMasked = ev.getActionMasked();
 
-        float x = ev.getX();
-        float y = ev.getY();
-
-        System.out.println("onInterceptTouchEvent:" + ev);
+        float dX = ev.getX() - downX;
+        float dY = ev.getY() - downY;
 
         switch (actionMasked) {
             case MotionEvent.ACTION_DOWN: {
 
-                downX = x;
-                downY = y;
+                downX = ev.getX();
+                downY = ev.getY();
 
                 isHorizontalScroll = false;
 
@@ -155,8 +140,8 @@ public class SwipeDismissListView extends ListView {
             case MotionEvent.ACTION_MOVE: {
 
                 //判断点还是滑动
-                if (Math.abs(x - downX) > HORIZONTAL_SCROLL_THRESHOLD
-                        && Math.abs(x - downX) > Math.abs(y - downY) * HORIZONTAL_SCROLL_FACTOR) {
+                if (Math.abs(dX) > HORIZONTAL_SCROLL_THRESHOLD
+                        && Math.abs(dX) > Math.abs(dY) * HORIZONTAL_SCROLL_FACTOR) {
                     //水平滑动
                     isHorizontalScroll = true;
 
@@ -191,23 +176,22 @@ public class SwipeDismissListView extends ListView {
 
     }
 
-    private void xTranslationAnim(View v, float desc, Animator.AnimatorListener listener) {
-        ObjectAnimator anim = ObjectAnimator.ofFloat(v, "translationX", v.getTranslationX(), desc);
-        anim.setDuration(ANIM_DURATION);
-        if (listener != null)
-            anim.addListener(listener);
-        anim.start();
+    private void xTranslationAnim(View v, float dst, ViewPropertyAnimatorListener listener) {
+
+        ViewCompat.animate(v).translationX(dst).setDuration(ANIM_DURATION)
+                .setListener(listener).start();
+
     }
 
     private class HeightAnim extends Animation {
 
         private View v;
-        private int src, desc;
+        private int src, dst;
 
-        public HeightAnim(View v, int desc, AnimationListener listener) {
+        public HeightAnim(View v, int dst, AnimationListener listener) {
             setAnimationListener(listener);
             this.v = v;
-            this.desc = desc;
+            this.dst = dst;
             this.src = v.getHeight();
             this.setDuration(ANIM_DURATION);
         }
@@ -217,7 +201,7 @@ public class SwipeDismissListView extends ListView {
 
             if (hasEnded())
                 return;
-            v.getLayoutParams().height = (int) (src + (desc - src) * interpolatedTime);
+            v.getLayoutParams().height = (int) (src + (dst - src) * interpolatedTime);
             v.requestLayout();
 
         }
@@ -234,7 +218,7 @@ public class SwipeDismissListView extends ListView {
             @Override
             public void onAnimationEnd(Animation animation) {
                 //恢复
-                v.getLayoutParams().height = -2;
+                v.getLayoutParams().height = LayoutParams.WRAP_CONTENT;
                 v.requestLayout();
                 v.setTranslationX(0);
                 if (listener != null) {
@@ -256,7 +240,7 @@ public class SwipeDismissListView extends ListView {
 
     public interface OnDismissListener {
 
-        public void onDismiss(int position);
+        void onDismiss(int position);
 
     }
 

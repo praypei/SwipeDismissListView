@@ -2,8 +2,8 @@ package me.liupei.swipedismisslistview;
 
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
 
             if(convertView == null) {
 
-                convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_type_b, parent, false);
+                convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_type_a, parent, false);
                 viewHolder = new ViewHolder(convertView);
                 convertView.setTag(viewHolder);
 
@@ -149,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
             viewHolder.tv.setTextSize(50);
             viewHolder.tv.setBackgroundColor(Color.WHITE);
             viewHolder.tv.setOnClickListener(new View.OnClickListener() {
+
                 @Override
                 public void onClick(View v) {
                     Toast.makeText(v.getContext(), "onClick:" + getItem(position), Toast.LENGTH_SHORT).show();
